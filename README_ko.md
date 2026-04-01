@@ -10,12 +10,12 @@ LiteLLM을 사용하여 Google Cloud Vertex AI의 Anthropic 모델을 안전하�
 
 ```mermaid
 graph TD
-    subgraph External Network
+    subgraph External_Network ["External Network"]
         User[API Client / Claude Code]
         Admin[Administrator Browser]
     end
 
-    subgraph External HTTP/S Load Balancer
+    subgraph LB ["External HTTP/S Load Balancer"]
         URLMap[URL Map Routing]
         CA[Cloud Armor<br/>IP Whitelisting]
         IAP[Identity-Aware Proxy<br/>Google Auth]
@@ -27,7 +27,7 @@ graph TD
         URLMap -- "/ui/*" --> IAP
     end
 
-    subgraph Virtual Private Cloud (VPC)
+    subgraph VPC ["Virtual Private Cloud - VPC"]
         CR[Cloud Run<br/>LiteLLM Proxy Container]
         DB[(Cloud SQL<br/>PostgreSQL 15)]
         PSC[Private Service Connect<br/>Reserved IP: 192.168.255.240]
@@ -41,7 +41,7 @@ graph TD
         DNS -- "Resolve API" --> PSC
     end
 
-    subgraph Google APIs
+    subgraph Google_APIs ["Google APIs"]
         SM[Secret Manager]
         VAI[Vertex AI<br/>Anthropic Models]
         
