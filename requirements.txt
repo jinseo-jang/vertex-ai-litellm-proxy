@@ -1,0 +1,6 @@
+# Security Note: Explicitly pinning to a safe version to avoid malicious v1.82.7 and v1.82.8
+litellm[proxy]==1.83.0
+google-cloud-aiplatform>=1.38.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+prisma

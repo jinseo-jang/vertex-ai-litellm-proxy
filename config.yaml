@@ -1,0 +1,18 @@
+model_list:
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: vertex_ai/claude-sonnet-4-6
+      vertex_location: "global"
+      vertex_project: "duper-project-1"
+
+litellm_settings:
+  # LiteLLM database mode uses these env vars automatically:
+  # DATABASE_URL, LITELLM_MASTER_KEY
+  set_verbose: True
+
+router_settings:
+  routing_strategy: "latency-based-routing"
+
+general_settings:
+  allow_user_auth: True
+  proxy_batch_write_at: 1

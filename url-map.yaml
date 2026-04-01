@@ -1,0 +1,18 @@
+defaultService: global/backendServices/litellm-api-backend
+name: litellm-proxy-url-map
+hostRules:
+- hosts:
+  - "mllllm.com"
+  pathMatcher: path-matcher-1
+pathMatchers:
+- defaultService: global/backendServices/litellm-api-backend
+  name: path-matcher-1
+  pathRules:
+  - paths:
+    - "/ui"
+    - "/ui/*"
+    service: global/backendServices/litellm-proxy-backend
+  - paths:
+    - "/v1"
+    - "/v1/*"
+    service: global/backendServices/litellm-api-backend
