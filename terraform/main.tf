@@ -65,7 +65,7 @@ resource "google_cloud_run_v2_service" "proxy" {
         network    = "default"
         subnetwork = "default"
       }
-      egress = "PRIVATE_RANGES_ONLY"
+      egress = "ALL_TRAFFIC"
     }
 
     containers {
@@ -264,4 +264,56 @@ resource "google_dns_record_set" "a_record" {
   type         = "A"
   ttl          = 300
   rrdatas      = [google_compute_global_address.default.address]
+}
+# ------------------------------------------------------------------------------
+# 9. Private Service Connect (PSC) for Google APIs
+# ------------------------------------------------------------------------------
+resource "google_compute_global_address" "psc_api_ip" {
+  name         = "google-api-psc-ip-tf"
+  project      = var.project_id
+  purpose      = "PRIVATE_SERVICE_CONNECT"
+  network      = "projects/${var.project_id}/global/networks/default"
+  address_type = "INTERNAL"
+  address      = "192.168.255.240"
+}
+
+resource "google_compute_global_forwarding_rule" "psc_api_forwarding_rule" {
+  name                  = "pscgoogleapistf"
+  project               = var.project_id
+  target                = "all-apis"
+  network               = "projects/${var.project_id}/global/networks/default"
+  ip_address            = google_compute_global_address.psc_api_ip.id
+  load_balancing_scheme = ""
+}
+
+resource "google_dns_managed_zone" "private_googleapis" {
+  name        = "private-googleapis-zone-tf"
+  project     = var.project_id
+  dns_name    = "googleapis.com."
+  description = "Private DNS zone for Google APIs via PSC"
+  visibility  = "private"
+  
+  private_visibility_config {
+    networks {
+      network_url = "projects/${var.project_id}/global/networks/default"
+    }
+  }
+}
+
+resource "google_dns_record_set" "googleapis_a_record_wildcard" {
+  name         = "*.googleapis.com."
+  project      = var.project_id
+  managed_zone = google_dns_managed_zone.private_googleapis.name
+  type         = "A"
+  ttl          = 300
+  rrdatas      = [google_compute_global_address.psc_api_ip.address]
+}
+
+resource "google_dns_record_set" "googleapis_a_record_root" {
+  name         = "googleapis.com."
+  project      = var.project_id
+  managed_zone = google_dns_managed_zone.private_googleapis.name
+  type         = "A"
+  ttl          = 300
+  rrdatas      = [google_compute_global_address.psc_api_ip.address]
 }
