@@ -40,6 +40,19 @@ Claude Code --[includes output_config]--> LiteLLM /vertex_ai/v1 (pass-through)
 
 `output_config` is a parameter supported by the direct Anthropic API (for structured output configuration, etc.) but is not yet supported by the Vertex AI Anthropic endpoint.
 
+#### Why does this only happen through LiteLLM, not when Claude Code calls Vertex AI directly?
+
+When Claude Code calls Vertex AI directly (with GCP ADC authentication), the Anthropic SDK's built-in Vertex AI adapter automatically strips parameters that Vertex AI does not support, including `output_config`. The request body is sanitized before it reaches the `streamRawPredict` endpoint.
+
+However, when Claude Code is configured with `CLAUDE_CODE_SKIP_VERTEX_AUTH=1` and a custom `ANTHROPIC_VERTEX_BASE_URL` pointing to the LiteLLM proxy, the SDK takes a different request construction path that bypasses this parameter filtering. As a result, `output_config` is included in the request body. Since LiteLLM's pass-through endpoint forwards the body as-is, the unsupported parameter reaches Vertex AI and triggers the 400 error.
+
+|  | Direct Vertex AI | Via LiteLLM Proxy |
+|--|------------------|-------------------|
+| Auth | GCP ADC (service account) | `CLAUDE_CODE_SKIP_VERTEX_AUTH=1` + LiteLLM virtual key |
+| SDK path | Vertex AI dedicated adapter | Auth-bypass path |
+| Parameter filtering | SDK strips unsupported params | No filtering; body forwarded as-is |
+| `output_config` | **Removed by SDK** | **Included** → 400 error |
+
 ### Related Issues
 
 - [BerriAI/litellm#21407](https://github.com/BerriAI/litellm/issues/21407) - Vertex AI `output_config` bug report
