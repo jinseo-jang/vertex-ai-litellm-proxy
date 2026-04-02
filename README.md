@@ -110,3 +110,7 @@ Configure your client (e.g., Claude Code or curl) to use the endpoint. The reque
   "model": "claude-sonnet-4-6"
 }
 ```
+
+## Troubleshooting
+
+For known issues and solutions (e.g., `output_config: Extra inputs are not permitted`), see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).

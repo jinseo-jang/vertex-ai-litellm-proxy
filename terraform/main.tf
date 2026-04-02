@@ -81,7 +81,7 @@ resource "google_cloud_run_v2_service" "proxy" {
       
       env {
         name  = "FORCE_REDEPLOY"
-        value = "8"
+        value = "9"
       }
       
       env {

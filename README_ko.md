@@ -110,3 +110,7 @@ Claude Code나 curl 같은 클라이언트를 구성할 때 다음과 같이 엔
   "model": "claude-sonnet-4-6"
 }
 ```
+
+## Troubleshooting
+
+알려진 이슈 및 해결 방법(예: `output_config: Extra inputs are not permitted`)은 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)를 참고하세요.
