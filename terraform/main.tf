@@ -81,7 +81,7 @@ resource "google_cloud_run_v2_service" "proxy" {
       
       env {
         name  = "FORCE_REDEPLOY"
-        value = "2"
+        value = "8"
       }
       
       env {
@@ -138,7 +138,7 @@ resource "google_compute_security_policy" "api_policy" {
     match {
       versioned_expr = "SRC_IPS_V1"
       config {
-        src_ip_ranges = [var.allowed_ip]
+        src_ip_ranges = var.allowed_ips
       }
     }
     description = "Allow user IP"
@@ -200,7 +200,7 @@ resource "google_compute_backend_service" "api_backend" {
 # ------------------------------------------------------------------------------
 resource "google_compute_url_map" "url_map" {
   name            = "litellm-proxy-url-map-tf"
-  default_service = google_compute_backend_service.api_backend.id
+  default_service = google_compute_backend_service.iap_backend.id
 
   host_rule {
     hosts        = [var.domain_name]
@@ -209,14 +209,14 @@ resource "google_compute_url_map" "url_map" {
 
   path_matcher {
     name            = "litellm-matcher"
-    default_service = google_compute_backend_service.api_backend.id
+    default_service = google_compute_backend_service.iap_backend.id
 
     path_rule {
       paths   = ["/ui", "/ui/*"]
       service = google_compute_backend_service.iap_backend.id
     }
     path_rule {
-      paths   = ["/v1", "/v1/*", "/key", "/key/*"]
+      paths   = ["/v1", "/v1/*", "/key", "/key/*", "/vertex_ai", "/vertex_ai/*"]
       service = google_compute_backend_service.api_backend.id
     }
   }

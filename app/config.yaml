@@ -4,10 +4,22 @@ model_list:
       model: vertex_ai/claude-sonnet-4-6
       vertex_location: "global"
       vertex_project: "duper-project-1"
+      use_in_pass_through: true
+  - model_name: claude-opus-4-6
+    litellm_params:
+      model: vertex_ai/claude-opus-4-6
+      vertex_location: "global"
+      vertex_project: "duper-project-1"
+      use_in_pass_through: true
+
+  - model_name: claude-haiku-4-5
+    litellm_params:
+      model: vertex_ai/claude-haiku-4-5
+      vertex_location: "global"
+      vertex_project: "duper-project-1"
+      use_in_pass_through: true
 
 litellm_settings:
-  # LiteLLM database mode uses these env vars automatically:
-  # DATABASE_URL, LITELLM_MASTER_KEY
   set_verbose: True
 
 router_settings:
@@ -16,3 +28,5 @@ router_settings:
 general_settings:
   allow_user_auth: True
   proxy_batch_write_at: 1
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true

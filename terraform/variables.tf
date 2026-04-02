@@ -16,10 +16,10 @@ variable "domain_name" {
   default     = "mllllm.com"
 }
 
-variable "allowed_ip" {
-  description = "IP address allowed to access API"
-  type        = string
-  default     = "112.168.208.241/32"
+variable "allowed_ips" {
+  description = "List of IP addresses allowed to access API"
+  type        = list(string)
+  default     = ["104.135.192.52/32", "34.85.101.232/32"]
 }
 
 variable "iap_admin_email" {
