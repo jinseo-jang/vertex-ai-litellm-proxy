@@ -100,15 +100,60 @@ While VPC-SC is a common mechanism to prevent public endpoint bypass, it is inte
 ### Dashboard Access (/ui)
 Navigate to `https://your.domain.com/ui` in a web browser. You will be prompted to authenticate via Google IAP. Once authenticated, enter the `LITELLM_MASTER_KEY` to access the admin panel.
 
-### API Access (/v1/*)
-Configure your client (e.g., Claude Code or curl) to use the endpoint. The request must originate from an IP address listed in the Cloud Armor policy.
+### API Access (/v1/*, /vertex_ai/*)
+All API requests must originate from an IP address listed in the Cloud Armor policy.
+
+LiteLLM exposes two API paths, each serving a different routing mode:
+
+| Path | Mode | Description |
+|------|------|-------------|
+| `/v1/*` | LiteLLM Native | LiteLLM translates and routes requests to Vertex AI |
+| `/vertex_ai/*` | Pass-through | Requests are forwarded directly to Vertex AI's `rawPredict` / `streamRawPredict` endpoints without modification |
+
+### Claude Code Configuration
+
+Claude Code connects to the LiteLLM proxy via the Vertex AI pass-through path (`/vertex_ai/v1`). Create or edit `~/.claude/settings.json` with the following environment variables:
 
 ```json
 {
-  "endpoint": "https://your.domain.com/v1",
-  "api_key": "sk-your-virtual-key",
-  "model": "claude-sonnet-4-6"
+  "env": {
+    "CLAUDE_CODE_USE_VERTEX": "1",
+    "ANTHROPIC_VERTEX_PROJECT_ID": "your-gcp-project-id",
+    "CLOUD_ML_REGION": "global",
+    "ANTHROPIC_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_VERTEX_BASE_URL": "https://your.domain.com/vertex_ai/v1",
+    "ANTHROPIC_AUTH_TOKEN": "sk-your-litellm-virtual-key",
+    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",
+    "DISABLE_PROMPT_CACHING": "1"
+  }
 }
+```
+
+| Variable | Description |
+|----------|-------------|
+| `CLAUDE_CODE_USE_VERTEX` | Enables Vertex AI mode in Claude Code |
+| `ANTHROPIC_VERTEX_PROJECT_ID` | GCP project ID where Anthropic models are enabled |
+| `CLOUD_ML_REGION` | Vertex AI region. Use `global` for cross-region routing |
+| `ANTHROPIC_MODEL` | Default model to use (e.g., `claude-sonnet-4-6`, `claude-opus-4-6`) |
+| `ANTHROPIC_VERTEX_BASE_URL` | LiteLLM proxy URL with the `/vertex_ai/v1` path |
+| `ANTHROPIC_AUTH_TOKEN` | LiteLLM virtual key (created via the LiteLLM dashboard or API) |
+| `CLAUDE_CODE_SKIP_VERTEX_AUTH` | Skips GCP ADC authentication since the proxy handles it |
+| `DISABLE_PROMPT_CACHING` | Disables prompt caching (required for Vertex AI pass-through) |
+
+> **Note:** The `ANTHROPIC_AUTH_TOKEN` is a LiteLLM virtual key, not a GCP or Anthropic API key. Generate one from the LiteLLM dashboard (`/ui`) or via the key management API (`/key/generate`).
+
+### curl Example
+
+```bash
+# Via pass-through path (same path Claude Code uses)
+curl -s "https://your.domain.com/vertex_ai/v1/projects/YOUR_PROJECT/locations/global/publishers/anthropic/models/claude-sonnet-4-6:rawPredict" \
+  -H "Authorization: Bearer sk-your-litellm-virtual-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 256,
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
 ```
 
 ## Troubleshooting
