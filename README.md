@@ -20,10 +20,10 @@ graph TD
         CA[Cloud Armor<br/>IP Whitelisting]
         IAP[Identity-Aware Proxy<br/>Google Auth]
         
-        User -- "HTTPS /v1/*" --> URLMap
+        User -- "HTTPS /v1/* , /vertex_ai/*" --> URLMap
         Admin -- "HTTPS /ui/*" --> URLMap
         
-        URLMap -- "/v1/*" --> CA
+        URLMap -- "/v1/* , /vertex_ai/*" --> CA
         URLMap -- "/ui/*" --> IAP
     end
 
@@ -53,7 +53,7 @@ graph TD
 ## Architecture Components
 
 *   **External HTTP(S) Load Balancer**: Acts as the single entry point. It terminates SSL connections and routes traffic based on URL paths.
-*   **Cloud Armor**: Applied to the `/v1/*` path. It restricts API access to explicitly whitelisted IP addresses, providing a strong perimeter defense against unauthorized programmatic access.
+*   **Cloud Armor**: Applied to the `/v1/*` and `/vertex_ai/*` paths. It restricts API access to explicitly whitelisted IP addresses, providing a strong perimeter defense against unauthorized programmatic access.
 *   **Identity-Aware Proxy (IAP)**: Applied to the `/ui/*` path. It requires Google Account authentication before allowing access to the LiteLLM administrative dashboard.
 *   **Cloud Run (LiteLLM)**: The core proxy application. It is configured with `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER` to prevent direct internet access and `egress = "ALL_TRAFFIC"` to force all outbound requests through the VPC.
 *   **Cloud SQL (PostgreSQL)**: Serves as the persistent data store for LiteLLM, managing virtual keys, user configurations, and telemetry data. It operates purely on private IP, accessible via Direct VPC Egress from Cloud Run.

@@ -20,10 +20,10 @@ graph TD
         CA[Cloud Armor<br/>IP Whitelisting]
         IAP[Identity-Aware Proxy<br/>Google Auth]
         
-        User -- "HTTPS /v1/*" --> URLMap
+        User -- "HTTPS /v1/* , /vertex_ai/*" --> URLMap
         Admin -- "HTTPS /ui/*" --> URLMap
         
-        URLMap -- "/v1/*" --> CA
+        URLMap -- "/v1/* , /vertex_ai/*" --> CA
         URLMap -- "/ui/*" --> IAP
     end
 
@@ -53,7 +53,7 @@ graph TD
 ## 아키텍처 구성 요소
 
 *   **External HTTP(S) Load Balancer**: 단일 진입점 역할을 수행합니다. SSL 연결을 처리하고 URL 경로에 따라 트래픽을 분기합니다.
-*   **Cloud Armor**: `/v1/*` 경로에 적용됩니다. 허용 목록(Whitelist)에 등록된 IP 주소에서만 API 접근을 허용하여, 비인가된 프로그래밍 방식의 호출을 네트워크 수준에서 차단합니다.
+*   **Cloud Armor**: `/v1/*` 및 `/vertex_ai/*` 경로에 적용됩니다. 허용 목록(Whitelist)에 등록된 IP 주소에서만 API 접근을 허용하여, 비인가된 프로그래밍 방식의 호출을 네트워크 수준에서 차단합니다.
 *   **Identity-Aware Proxy (IAP)**: `/ui/*` 경로에 적용됩니다. LiteLLM 관리자 대시보드에 접근하기 전 Google 계정 로그인을 강제합니다.
 *   **Cloud Run (LiteLLM)**: 핵심 프록시 애플리케이션입니다. 인터넷을 통한 직접 접근을 막기 위해 `INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER`로 설정되며, 모든 아웃바운드 요청을 VPC 내부로 강제하기 위해 `egress = "ALL_TRAFFIC"`으로 구성됩니다.
 *   **Cloud SQL (PostgreSQL)**: 가상 키, 사용자 구성 및 텔레메트리 데이터를 관리하는 영구 데이터 저장소입니다. Private IP로 구성되어 외부 노출이 없으며, Cloud Run의 Direct VPC Egress를 통해 접근됩니다.
