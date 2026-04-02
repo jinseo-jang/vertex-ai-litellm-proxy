@@ -100,8 +100,28 @@ If new unsupported parameters are introduced in the future, simply add the param
 
 ### Verification
 
-After rebuilding and redeploying, the following feature tests were executed to confirm normal operation.
+After rebuilding and redeploying, two levels of verification were performed.
 
+#### 1. Callback Necessity Test (via Claude Code)
+
+To confirm the custom callback is essential, the proxy was deployed **without** the callback and tested with Claude Code:
+
+```bash
+claude -p "Say hello in Korean"
+```
+
+| Deployment | Result |
+|------------|--------|
+| Latest LiteLLM image **without** callback | `output_config: Extra inputs are not permitted` (400 error) |
+| Latest LiteLLM image **with** callback | Success |
+
+This confirms that LiteLLM's official PR #22884 does not cover the pass-through path, and the custom callback is required.
+
+#### 2. Feature Test Suite (via curl)
+
+All Vertex AI Anthropic features were tested via the pass-through endpoint using curl.
+
+**Setup:**
 ```bash
 export BASE="https://YOUR_DOMAIN/vertex_ai/v1"
 export PROJECT="YOUR_PROJECT_ID"
@@ -109,7 +129,139 @@ export LOCATION="global"
 export API_KEY="YOUR_API_KEY"
 export MODEL="claude-haiku-4-5@20251001"
 export ENDPOINT="$BASE/projects/$PROJECT/locations/$LOCATION/publishers/anthropic/models/$MODEL:rawPredict"
+export ENDPOINT_STREAM="$BASE/projects/$PROJECT/locations/$LOCATION/publishers/anthropic/models/$MODEL:streamRawPredict"
 ```
+
+**1. Basic Messages**
+```bash
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 128,
+    "messages": [{"role": "user", "content": "Say hello in Korean, Japanese, and Chinese. One line each."}]
+  }'
+```
+
+**2. Streaming**
+```bash
+curl -s "$ENDPOINT_STREAM" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 128,
+    "stream": true,
+    "messages": [{"role": "user", "content": "Count from 1 to 5."}]
+  }'
+```
+
+**3. Extended Thinking**
+```bash
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 4096,
+    "thinking": {"type": "enabled", "budget_tokens": 2048},
+    "messages": [{"role": "user", "content": "What is 27 * 453?"}]
+  }'
+```
+
+**4. Tool Use**
+```bash
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 512,
+    "tools": [{
+      "name": "get_weather",
+      "description": "Get current weather for a location",
+      "input_schema": {
+        "type": "object",
+        "properties": {"location": {"type": "string"}},
+        "required": ["location"]
+      }
+    }],
+    "messages": [{"role": "user", "content": "What is the weather in Seoul?"}]
+  }'
+```
+
+**5. Vision (base64)**
+```bash
+# Generate a minimal test image (1x1 red pixel PNG)
+IMG_B64=$(python3 -c "
+import base64, struct, zlib
+sig = b'\x89PNG\r\n\x1a\n'
+ihdr_data = struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0)
+ihdr_crc = zlib.crc32(b'IHDR' + ihdr_data) & 0xffffffff
+ihdr = struct.pack('>I', 13) + b'IHDR' + ihdr_data + struct.pack('>I', ihdr_crc)
+raw = zlib.compress(b'\x00\xff\x00\x00')
+idat_crc = zlib.crc32(b'IDAT' + raw) & 0xffffffff
+idat = struct.pack('>I', len(raw)) + b'IDAT' + raw + struct.pack('>I', idat_crc)
+iend_crc = zlib.crc32(b'IEND') & 0xffffffff
+iend = struct.pack('>I', 0) + b'IEND' + struct.pack('>I', iend_crc)
+print(base64.b64encode(sig + ihdr + idat + iend).decode())
+")
+
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 256,
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "'"$IMG_B64"'"}},
+        {"type": "text", "text": "What color is this image?"}
+      ]
+    }]
+  }'
+```
+
+> **Note:** URL-based image sources are not supported by the Vertex AI Anthropic endpoint. Use base64-encoded images only.
+
+**6. Multi-turn**
+```bash
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 256,
+    "system": "You are a helpful math tutor. Be concise.",
+    "messages": [
+      {"role": "user", "content": "What is a derivative?"},
+      {"role": "assistant", "content": "A derivative measures the rate of change of a function."},
+      {"role": "user", "content": "Give me one simple example."}
+    ]
+  }'
+```
+
+**7. Citations**
+```bash
+curl -s "$ENDPOINT" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "anthropic_version": "vertex-2023-10-16",
+    "max_tokens": 512,
+    "messages": [{
+      "role": "user",
+      "content": [
+        {"type": "document", "source": {"type": "text", "media_type": "text/plain", "data": "The Eiffel Tower is 330 meters tall. It was built in 1889 for the World Fair. It is located in Paris, France."}, "title": "Eiffel Tower Facts", "citations": {"enabled": true}},
+        {"type": "text", "text": "How tall is the Eiffel Tower and when was it built?"}
+      ]
+    }]
+  }'
+```
+
+#### Results
 
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
