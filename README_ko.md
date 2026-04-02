@@ -108,7 +108,7 @@ LiteLLM은 두 가지 API 경로를 제공하며, 각각 다른 라우팅 모드
 | 경로 | 모드 | 설명 |
 |------|------|------|
 | `/v1/*` | LiteLLM 네이티브 | LiteLLM이 요청을 변환하여 Vertex AI로 라우팅 |
-| `/vertex_ai/*` | Pass-through | 요청을 수정 없이 Vertex AI의 `rawPredict` / `streamRawPredict` 엔드포인트로 직접 전달 |
+| `/vertex_ai/*` | Pass-through | 요청을 수정 없이 Vertex AI의 `rawPredict` / `streamRawPredict` 엔드포인트로 직접 전달. Vertex AI 미지원 파라미터(예: `output_config`)를 제거하는 [커스텀 콜백](app/strip_unsupported_params.py)이 포함되어 있음. 자세한 내용은 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) 참고 |
 
 ### Claude Code 설정
 

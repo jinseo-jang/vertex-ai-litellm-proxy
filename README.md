@@ -108,7 +108,7 @@ LiteLLM exposes two API paths, each serving a different routing mode:
 | Path | Mode | Description |
 |------|------|-------------|
 | `/v1/*` | LiteLLM Native | LiteLLM translates and routes requests to Vertex AI |
-| `/vertex_ai/*` | Pass-through | Requests are forwarded directly to Vertex AI's `rawPredict` / `streamRawPredict` endpoints without modification |
+| `/vertex_ai/*` | Pass-through | Requests are forwarded directly to Vertex AI's `rawPredict` / `streamRawPredict` endpoints without modification. A [custom callback](app/strip_unsupported_params.py) is included to strip parameters unsupported by Vertex AI (e.g., `output_config`). See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for details |
 
 ### Claude Code Configuration
 

@@ -62,23 +62,9 @@ PR #22884 removes `output_config` in LiteLLM's transformation layer (standard co
 
 ### Resolution
 
-A two-step approach is used to resolve this.
+> **Important:** [PR #22884](https://github.com/BerriAI/litellm/pull/22884) fixes `output_config` stripping in LiteLLM's transformation layer (standard `/v1/messages` completion routes), but **does NOT fix the pass-through path** (`/vertex_ai/v1/...`) used by Claude Code. This was verified by deploying the latest LiteLLM image (post-PR #22884) without the custom callback — the `output_config` error persisted. **The custom callback below is required** to resolve this issue for pass-through endpoints.
 
-#### Step 1: Update the LiteLLM Docker Image
-
-Rebuild with the latest image that includes PR #22884 to check if the official fix applies.
-
-```bash
-gcloud builds submit app/ \
-  --tag us-central1-docker.pkg.dev/PROJECT_ID/litellm-repo/litellm-proxy:latest \
-  --quiet
-
-gcloud run services update litellm-proxy-tf \
-  --region us-central1 \
-  --image us-central1-docker.pkg.dev/PROJECT_ID/litellm-repo/litellm-proxy:latest
-```
-
-#### Step 2: Custom Callback to Strip Parameters (if Step 1 does not resolve the issue)
+#### Custom Callback to Strip Unsupported Parameters
 
 Use LiteLLM's `CustomLogger.async_pre_call_hook` to register a callback that removes unsupported parameters before the pass-through request is forwarded to Vertex AI.
 
