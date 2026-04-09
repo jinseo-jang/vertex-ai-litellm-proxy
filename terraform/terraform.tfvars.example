@@ -1,0 +1,8 @@
+project_id          = "your-gcp-project-id"
+region              = "us-central1"
+domain_name         = "your.domain.com"
+allowed_ips         = ["203.0.113.1/32"]
+iap_admin_email     = "admin@yourcompany.com"
+litellm_master_key  = "sk-your-master-key"
+artifact_repo_name  = "litellm-repo"
+dns_zone_name       = "your-dns-zone"

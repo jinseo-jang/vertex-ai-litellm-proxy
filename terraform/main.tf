@@ -69,14 +69,14 @@ resource "google_cloud_run_v2_service" "proxy" {
     }
 
     containers {
-      image = "us-central1-docker.pkg.dev/duper-project-1/litellm-repo/litellm-proxy:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.artifact_repo_name}/litellm-proxy:latest"
       ports {
         container_port = 8080
       }
       
       env {
         name  = "LITELLM_MASTER_KEY"
-        value = "sk-litellm-master-key-2026"
+        value = var.litellm_master_key
       }
       
       env {
@@ -255,7 +255,7 @@ resource "google_compute_global_forwarding_rule" "default" {
 # 8. Cloud DNS 연동
 # ------------------------------------------------------------------------------
 data "google_dns_managed_zone" "env_dns_zone" {
-  name = "mlllm"
+  name = var.dns_zone_name
 }
 
 resource "google_dns_record_set" "a_record" {

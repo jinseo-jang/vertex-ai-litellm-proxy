@@ -1,7 +1,6 @@
 variable "project_id" {
   description = "The GCP Project ID"
   type        = string
-  default     = "duper-project-1"
 }
 
 variable "region" {
@@ -13,17 +12,31 @@ variable "region" {
 variable "domain_name" {
   description = "Custom domain for the proxy"
   type        = string
-  default     = "mllllm.com"
 }
 
 variable "allowed_ips" {
   description = "List of IP addresses allowed to access API"
   type        = list(string)
-  default     = ["104.135.192.52/32", "34.85.101.232/32"]
 }
 
 variable "iap_admin_email" {
   description = "Email of the user allowed to access IAP"
   type        = string
-  default     = "jjinseo-admin@jjinseo.altostrat.com"
+}
+
+variable "litellm_master_key" {
+  description = "Master key for LiteLLM proxy authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "artifact_repo_name" {
+  description = "Artifact Registry repository name for the LiteLLM Docker image"
+  type        = string
+  default     = "litellm-repo"
+}
+
+variable "dns_zone_name" {
+  description = "Name of the existing Cloud DNS managed zone for the domain"
+  type        = string
 }

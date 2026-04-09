@@ -75,18 +75,30 @@ While VPC-SC is a common mechanism to prevent public endpoint bypass, it is inte
 
 ### Deployment Steps
 
-1. Configure the `variables.tf` file or provide a `terraform.tfvars` file with your specific environment details:
+1. Copy the example variable file and fill in your values:
+   ```bash
+   cd terraform
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+   Edit `terraform.tfvars` with your specific environment details:
    ```hcl
-   project_id      = "your-gcp-project-id"
-   region          = "us-central1"
-   domain_name     = "your.domain.com"
-   allowed_ip      = "203.0.113.1/32"
-   iap_admin_email = "admin@yourcompany.com"
+   project_id          = "your-gcp-project-id"
+   region              = "us-central1"
+   domain_name         = "your.domain.com"
+   allowed_ips         = ["203.0.113.1/32"]
+   iap_admin_email     = "admin@yourcompany.com"
+   litellm_master_key  = "sk-your-master-key"
+   artifact_repo_name  = "litellm-repo"
+   dns_zone_name       = "your-dns-zone"
    ```
 
-2. Initialize and apply the Terraform configuration:
+2. Update the LiteLLM config file (`app/config.yaml`) with your GCP project ID:
+   ```yaml
+   vertex_project: "your-gcp-project-id"
+   ```
+
+3. Initialize and apply the Terraform configuration:
    ```bash
-   cd terraform_litellm
    terraform init
    terraform apply
    ```

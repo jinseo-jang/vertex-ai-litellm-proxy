@@ -6,6 +6,7 @@
 .terraform.lock.hcl
 **/.terraform.lock.hcl
 *.tfvars
+!*.tfvars.example
 *.tfvars.json
 
 # Python

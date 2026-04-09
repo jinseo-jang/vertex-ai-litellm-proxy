@@ -2,9 +2,9 @@ import os
 import litellm
 
 # Explicitly use the safe version pinned earlier
-# Check if model access works for duper-project-1
+# Check if model access works for your project
 def test_vertex_anthropic():
-    project_id = "duper-project-1"
+    project_id = os.environ.get("PROJECT_ID", "YOUR_PROJECT_ID")
     region = "us-central1"
     
     # Model name format for litellm: vertex_ai/model-name
